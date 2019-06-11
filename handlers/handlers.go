@@ -6,6 +6,8 @@ import (
 	log "github.com/sirupsen/logrus"
 	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 )
 
 type VideoListItem struct {
@@ -23,12 +25,17 @@ type Video struct {
 	Url string `json:"url"`
 }
 
+const dirPath = "content"
+
+const videoContentType = "video/mp4"
+
 func Router() http.Handler {
 	r := mux.NewRouter()
 	s := r.PathPrefix("/api/v1").Subrouter()
 
 	s.HandleFunc("/list", getList).Methods(http.MethodGet)
 	s.HandleFunc("/video/{ID}", getVideo).Methods(http.MethodGet)
+	s.HandleFunc("/video", uploadVideo).Methods(http.MethodPost)
 
 	return logMiddleware(r)
 }
@@ -116,6 +123,45 @@ func getVideo(w http.ResponseWriter, r *http.Request) {
 	if _, err = io.WriteString(w, string(b)); err != nil {
 		log.WithField("err", err).Error("write response error")
 	}
+}
+
+func uploadVideo(w http.ResponseWriter, r *http.Request) {
+	fileReader, header, err := r.FormFile("file[]")
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	contentType := header.Header.Get("Content-Type")
+	if contentType != videoContentType {
+		http.Error(w, "Unexpected content type", http.StatusBadRequest)
+		return
+	}
+
+	fileName := header.Filename
+
+	file, err := createFile(fileName)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	defer file.Close() // случайно заигнорил тип ошибки unhandled error
+
+	_, err = io.Copy(file, fileReader)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+}
+
+func createFile(fileName string) (*os.File, error) {
+	if err := os.Mkdir(dirPath, os.ModeDir); err != nil && !os.IsExist(err) {
+		return nil, err
+	}
+	filePath := filepath.Join(dirPath, fileName)
+	return os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY, os.ModePerm)
 }
 
 func logMiddleware(h http.Handler) http.Handler {
