@@ -37,48 +37,10 @@ func Router(db *sql.DB) http.Handler {
 	s := r.PathPrefix("/api/v1").Subrouter()
 
 	s.HandleFunc("/list", getListFromDb(db)).Methods(http.MethodGet)
-	s.HandleFunc("/video/{ID}", getVideo).Methods(http.MethodGet)
+	s.HandleFunc("/video/{ID}", getVideoFromDb(db)).Methods(http.MethodGet)
 	s.HandleFunc("/video", uploadVideo).Methods(http.MethodPost)
 
 	return logMiddleware(r)
-}
-
-func getVideo(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	id := vars["ID"]
-
-	videoList := []Video{
-		{
-			"d290f1ee-6c54-4b01-90e6-d701748f0851",
-			"Black Retrospetive Woman",
-			15,
-			"/content/d290f1ee-6c54-4b01-90e6-d701748f0851/screen.jpg",
-			"/content/d290f1ee-6c54-4b01-90e6-d701748f0851/index.mp4",
-		},
-		{
-			"sldjfl34-dfgj-523k-jk34-5jk3j45klj34",
-			"Go Rally TEASER-HD",
-			41,
-			"/content/sldjfl34-dfgj-523k-jk34-5jk3j45klj34/screen.jpg",
-			"/content/sldjfl34-dfgj-523k-jk34-5jk3j45klj34/index.mp4",
-		},
-		{
-			"hjkhhjk3-23j4-j45k-erkj-kj3k4jl2k345",
-			"Танцор",
-			92,
-			"/content/hjkhhjk3-23j4-j45k-erkj-kj3k4jl2k345/screen.jpg",
-			"/content/hjkhhjk3-23j4-j45k-erkj-kj3k4jl2k345/index.mp4",
-		},
-	}
-	var video Video
-	for _, value := range videoList {
-		if value.Id == id {
-			video = value
-			break
-		}
-	}
-
-	writeResponseData(w, video)
 }
 
 func uploadVideo(w http.ResponseWriter, r *http.Request) {
@@ -170,6 +132,28 @@ func getListFromDb(db *sql.DB) func(http.ResponseWriter, *http.Request) {
 		}
 
 		writeResponseData(w, videos)
+	}
+}
+
+func getVideoFromDb(db *sql.DB) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		vars := mux.Vars(r)
+		id := vars["ID"]
+
+		var video Video
+		err := db.QueryRow("SELECT video_key, title, duration, thumbnail_url, url FROM video WHERE video_key = ?", id).Scan(
+			&video.Id,
+			&video.Name,
+			&video.Duration,
+			&video.Thumbnail,
+			&video.Url,
+		)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+
+		writeResponseData(w, video)
 	}
 }
 

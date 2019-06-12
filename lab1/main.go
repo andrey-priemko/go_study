@@ -25,7 +25,6 @@ func main() {
 		log.Fatal(err)
 	}
 	defer db.Close()
-	log.Info("база данных поднята")
 
 	killSignalChan := getKillSignalChan()
 
