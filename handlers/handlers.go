@@ -31,6 +31,7 @@ const dirPath = "content"
 
 const videoContentType = "video/mp4"
 const videoFileName = "index.mp4"
+const thumbFileName = "screen.jpg"
 
 func Router(db *sql.DB) http.Handler {
 	r := mux.NewRouter()
@@ -38,54 +39,17 @@ func Router(db *sql.DB) http.Handler {
 
 	s.HandleFunc("/list", getListFromDb(db)).Methods(http.MethodGet)
 	s.HandleFunc("/video/{ID}", getVideoFromDb(db)).Methods(http.MethodGet)
-	s.HandleFunc("/video", uploadVideo).Methods(http.MethodPost)
+	s.HandleFunc("/video", uploadVideoIntoDb(db)).Methods(http.MethodPost)
 
 	return logMiddleware(r)
 }
 
-func uploadVideo(w http.ResponseWriter, r *http.Request) {
-	fileReader, header, err := r.FormFile("file[]")
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	contentType := header.Header.Get("Content-Type")
-	if contentType != videoContentType {
-		http.Error(w, "Unexpected content type", http.StatusBadRequest)
-		return
-	}
-
-	fileName := header.Filename
-
-	file, err := createFile(fileName)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-	defer file.Close() // случайно заигнорил тип ошибки unhandled error
-
-	_, err = io.Copy(file, fileReader)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	w.WriteHeader(http.StatusOK)
-}
-
-func createFile(fileName string) (*os.File, error) {
+func createFile(id string) (*os.File, error) {
 	if err := os.Mkdir(dirPath, os.ModeDir); err != nil && !os.IsExist(err) {
 		return nil, err
 	}
 
-	id, err := uuid.NewUUID()
-	if err != nil {
-		return nil, err
-	}
-	idStr := id.String()
-
-	videoDirPath := filepath.Join(dirPath, idStr)
+	videoDirPath := filepath.Join(dirPath, id)
 	if err := os.Mkdir(videoDirPath, os.ModeDir); err != nil && !os.IsExist(err) {
 		return nil, err
 	}
@@ -154,6 +118,59 @@ func getVideoFromDb(db *sql.DB) func(http.ResponseWriter, *http.Request) {
 		}
 
 		writeResponseData(w, video)
+	}
+}
+
+func uploadVideoIntoDb(db *sql.DB) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		fileReader, header, err := r.FormFile("file[]")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		contentType := header.Header.Get("Content-Type")
+		if contentType != videoContentType {
+			http.Error(w, "Unexpected content type", http.StatusBadRequest)
+			return
+		}
+
+		fileName := header.Filename
+
+		id, err := uuid.NewUUID()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		idStr := id.String()
+
+		file, err := createFile(idStr)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+		defer file.Close() // случайно заигнорил тип ошибки unhandled error
+
+		_, err = io.Copy(file, fileReader)
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		videoPath := filepath.Join(dirPath, idStr, videoFileName)
+		thumbPath := filepath.Join(dirPath, idStr, thumbFileName)
+
+		db.QueryRow(
+			"INSERT INTO video SET video_key = ?, title = ?, duration = ?, thumbnail_url = ?, url = ?, status = ?",
+			idStr,
+			fileName,
+			127,
+			thumbPath,
+			videoPath,
+			3,
+		)
+
+		w.WriteHeader(http.StatusOK)
 	}
 }
 
