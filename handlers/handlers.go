@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"encoding/json"
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 	"io"
@@ -28,6 +29,7 @@ type Video struct {
 const dirPath = "content"
 
 const videoContentType = "video/mp4"
+const videoFileName = "index.mp4"
 
 func Router() http.Handler {
 	r := mux.NewRouter()
@@ -160,7 +162,19 @@ func createFile(fileName string) (*os.File, error) {
 	if err := os.Mkdir(dirPath, os.ModeDir); err != nil && !os.IsExist(err) {
 		return nil, err
 	}
-	filePath := filepath.Join(dirPath, fileName)
+
+	id, err := uuid.NewUUID()
+	if err != nil {
+		return nil, err
+	}
+	idStr := id.String()
+
+	videoDirPath := filepath.Join(dirPath, idStr)
+	if err := os.Mkdir(videoDirPath, os.ModeDir); err != nil && !os.IsExist(err) {
+		return nil, err
+	}
+
+	filePath := filepath.Join(videoDirPath, videoFileName)
 	return os.OpenFile(filePath, os.O_CREATE|os.O_WRONLY, os.ModePerm)
 }
 
