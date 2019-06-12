@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"database/sql"
 	"encoding/json"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -31,51 +32,15 @@ const dirPath = "content"
 const videoContentType = "video/mp4"
 const videoFileName = "index.mp4"
 
-func Router() http.Handler {
+func Router(db *sql.DB) http.Handler {
 	r := mux.NewRouter()
 	s := r.PathPrefix("/api/v1").Subrouter()
 
-	s.HandleFunc("/list", getList).Methods(http.MethodGet)
+	s.HandleFunc("/list", getListFromDb(db)).Methods(http.MethodGet)
 	s.HandleFunc("/video/{ID}", getVideo).Methods(http.MethodGet)
 	s.HandleFunc("/video", uploadVideo).Methods(http.MethodPost)
 
 	return logMiddleware(r)
-}
-
-func getList(w http.ResponseWriter, _ *http.Request) {
-	videoList := []VideoListItem{
-		{
-			"d290f1ee-6c54-4b01-90e6-d701748f0851",
-			"Black Retrospetive Woman",
-			15,
-			"/content/d290f1ee-6c54-4b01-90e6-d701748f0851/screen.jpg",
-		},
-		{
-			"sldjfl34-dfgj-523k-jk34-5jk3j45klj34",
-			"Go Rally TEASER-HD",
-			41,
-			"/content/sldjfl34-dfgj-523k-jk34-5jk3j45klj34/screen.jpg",
-		},
-		{
-			"hjkhhjk3-23j4-j45k-erkj-kj3k4jl2k345",
-			"Танцор",
-			92,
-			"/content/hjkhhjk3-23j4-j45k-erkj-kj3k4jl2k345/screen.jpg",
-		},
-	}
-
-	b, err := json.Marshal(videoList)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
-
-	if _, err = io.WriteString(w, string(b)); err != nil {
-		log.WithField("err", err).Error("write response error")
-	}
 }
 
 func getVideo(w http.ResponseWriter, r *http.Request) {
@@ -113,18 +78,7 @@ func getVideo(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	b, err := json.Marshal(video)
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusInternalServerError)
-		return
-	}
-
-	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
-	w.WriteHeader(http.StatusOK)
-
-	if _, err = io.WriteString(w, string(b)); err != nil {
-		log.WithField("err", err).Error("write response error")
-	}
+	writeResponseData(w, video)
 }
 
 func uploadVideo(w http.ResponseWriter, r *http.Request) {
@@ -188,4 +142,48 @@ func logMiddleware(h http.Handler) http.Handler {
 		}).Info("got a new request")
 		h.ServeHTTP(w, r)
 	})
+}
+
+func getListFromDb(db *sql.DB) func(http.ResponseWriter, *http.Request) {
+	return func(w http.ResponseWriter, r *http.Request) {
+		rows, err := db.Query("SELECT video_key, title, duration, thumbnail_url FROM video")
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		defer rows.Close()
+
+		videos := make([]VideoListItem, 0)
+		for rows.Next() {
+			var videoListItem VideoListItem
+			err := rows.Scan(
+				&videoListItem.Id,
+				&videoListItem.Name,
+				&videoListItem.Duration,
+				&videoListItem.Thumbnail,
+			)
+			if err != nil {
+				http.Error(w, err.Error(), http.StatusInternalServerError)
+				return
+			}
+			videos = append(videos, videoListItem)
+		}
+
+		writeResponseData(w, videos)
+	}
+}
+
+func writeResponseData(w http.ResponseWriter, data interface{})  {
+	b, err := json.Marshal(data)
+	if err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json; charset=UTF-8")
+	w.WriteHeader(http.StatusOK)
+
+	if _, err = io.WriteString(w, string(b)); err != nil {
+		log.WithField("err", err).Error("write response error")
+	}
 }

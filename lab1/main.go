@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"database/sql"
+	_ "github.com/go-sql-driver/mysql"
 	log "github.com/sirupsen/logrus"
 	"go_study/handlers"
 	"net/http"
@@ -18,18 +20,25 @@ func main() {
 		defer file.Close()
 	}
 
-	serverUrl := ":8000"
-	log.WithFields(log.Fields{"url": serverUrl}).Info("starting the server")
+	db, err := sql.Open("mysql", `root:1234@/go_dev`)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer db.Close()
+	log.Info("база данных поднята")
 
 	killSignalChan := getKillSignalChan()
-	srv := startServer(serverUrl)
+
+	serverUrl := ":8000"
+	log.WithFields(log.Fields{"url": serverUrl}).Info("starting the server")
+	srv := startServer(serverUrl, db)
 
 	waitForKillSignal(killSignalChan)
 	srv.Shutdown(context.Background())
 }
 
-func startServer(serverUrl string) *http.Server {
-	router := handlers.Router()
+func startServer(serverUrl string, db *sql.DB) *http.Server {
+	router := handlers.Router(db)
 	srv := &http.Server{Addr: serverUrl, Handler: router}
 	go func() {
 		log.Fatal(srv.ListenAndServe())
