@@ -9,7 +9,9 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"strconv"
 )
 
 type VideoListItem struct {
@@ -149,7 +151,7 @@ func uploadVideoIntoDb(db *sql.DB) func(http.ResponseWriter, *http.Request) {
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		defer file.Close() // случайно заигнорил тип ошибки unhandled error
+		defer file.Close()
 
 		_, err = io.Copy(file, fileReader)
 		if err != nil {
@@ -159,6 +161,19 @@ func uploadVideoIntoDb(db *sql.DB) func(http.ResponseWriter, *http.Request) {
 
 		videoPath := filepath.Join(dirPath, idStr, videoFileName)
 		thumbPath := filepath.Join(dirPath, idStr, thumbFileName)
+
+		out, err := exec.Command("D:\\projects\\go_dev\\dev\\src\\go_study\\VideoProcessor.exe", videoPath, thumbPath).Output()
+		if err != nil {
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
+
+		duration, err := strconv.ParseFloat(string(out), 64)
+		if err != nil {
+			log.Fatal(err.Error())
+			http.Error(w, err.Error(), http.StatusBadRequest)
+			return
+		}
 
 		tx, err := db.Begin()
 		if err != nil {
@@ -171,7 +186,7 @@ func uploadVideoIntoDb(db *sql.DB) func(http.ResponseWriter, *http.Request) {
 			"INSERT INTO video SET video_key = ?, title = ?, duration = ?, thumbnail_url = ?, url = ?, status = ?",
 			idStr,
 			fileName,
-			127,
+			duration,
 			thumbPath,
 			videoPath,
 			3,

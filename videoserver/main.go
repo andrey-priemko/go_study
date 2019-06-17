@@ -5,7 +5,7 @@ import (
 	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
 	log "github.com/sirupsen/logrus"
-	"go_study/handlers"
+	"go_study/videoserver/handlers"
 	"net/http"
 	"os"
 	"os/signal"
