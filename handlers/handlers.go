@@ -160,7 +160,14 @@ func uploadVideoIntoDb(db *sql.DB) func(http.ResponseWriter, *http.Request) {
 		videoPath := filepath.Join(dirPath, idStr, videoFileName)
 		thumbPath := filepath.Join(dirPath, idStr, thumbFileName)
 
-		db.QueryRow(
+		tx, err := db.Begin()
+		if err != nil {
+			log.Fatal(err.Error())
+			return
+		}
+		defer tx.Rollback()
+
+		rows, err := tx.Query(
 			"INSERT INTO video SET video_key = ?, title = ?, duration = ?, thumbnail_url = ?, url = ?, status = ?",
 			idStr,
 			fileName,
@@ -169,6 +176,17 @@ func uploadVideoIntoDb(db *sql.DB) func(http.ResponseWriter, *http.Request) {
 			videoPath,
 			3,
 		)
+		if err != nil {
+			log.Fatal(err.Error())
+			return
+		}
+		defer rows.Close()
+
+		err = tx.Commit()
+		if err != nil {
+			log.Fatal(err.Error())
+			return
+		}
 
 		w.WriteHeader(http.StatusOK)
 	}
