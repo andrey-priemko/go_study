@@ -3,6 +3,7 @@ package handlers
 import (
 	"database/sql"
 	"github.com/gorilla/mux"
+	log "github.com/sirupsen/logrus"
 	"go_study/videoserver/model"
 	"net/http"
 )
@@ -21,6 +22,7 @@ func getVideo(db *sql.DB) func(http.ResponseWriter, *http.Request) {
 			&video.Url,
 		)
 		if err != nil {
+			log.Fatal(err.Error())
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}

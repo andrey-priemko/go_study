@@ -6,8 +6,6 @@ import (
 	"path/filepath"
 )
 
-const CONTENT_DIR = "content"
-
 func CreateFile(fileName string) (*os.File, string, error) {
 	if err := os.Mkdir(CONTENT_DIR, os.ModeDir); err != nil && !os.IsExist(err) {
 		return nil, "", err

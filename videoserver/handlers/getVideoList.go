@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"database/sql"
+	log "github.com/sirupsen/logrus"
 	"go_study/videoserver/model"
 	"net/http"
 )
@@ -25,6 +26,7 @@ func getVideoList(db *sql.DB) func(http.ResponseWriter, *http.Request) {
 				&videoListItem.Thumbnail,
 			)
 			if err != nil {
+				log.Fatal(err.Error())
 				http.Error(w, err.Error(), http.StatusInternalServerError)
 				return
 			}
