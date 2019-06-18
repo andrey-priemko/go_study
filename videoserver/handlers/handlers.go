@@ -6,6 +6,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
+	"go_study/videoserver/model"
 	"io"
 	"net/http"
 	"os"
@@ -13,21 +14,6 @@ import (
 	"path/filepath"
 	"strconv"
 )
-
-type VideoListItem struct {
-	Id string `json:"id"`
-	Name string `json:"name"`
-	Duration int `json:"duration"`
-	Thumbnail string `json:"thumbnail"`
-}
-
-type Video struct {
-	Id string `json:"id"`
-	Name string `json:"name"`
-	Duration int `json:"duration"`
-	Thumbnail string `json:"thumbnail"`
-	Url string `json:"url"`
-}
 
 const dirPath = "content"
 
@@ -81,9 +67,9 @@ func getListFromDb(db *sql.DB) func(http.ResponseWriter, *http.Request) {
 		}
 		defer rows.Close()
 
-		videos := make([]VideoListItem, 0)
+		videos := make([]model.VideoListItem, 0)
 		for rows.Next() {
-			var videoListItem VideoListItem
+			var videoListItem model.VideoListItem
 			err := rows.Scan(
 				&videoListItem.Id,
 				&videoListItem.Name,
@@ -106,7 +92,7 @@ func getVideoFromDb(db *sql.DB) func(http.ResponseWriter, *http.Request) {
 		vars := mux.Vars(r)
 		id := vars["ID"]
 
-		var video Video
+		var video model.Video
 		err := db.QueryRow("SELECT video_key, title, duration, thumbnail_url, url FROM video WHERE video_key = ?", id).Scan(
 			&video.Id,
 			&video.Name,
