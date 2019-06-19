@@ -6,9 +6,7 @@ import (
 	"go_study/videoserver/storage"
 	"io"
 	"net/http"
-	"os/exec"
 	"path/filepath"
-	"strconv"
 )
 
 func uploadVideo(db *sql.DB) func(http.ResponseWriter, *http.Request) {
@@ -42,23 +40,6 @@ func uploadVideo(db *sql.DB) func(http.ResponseWriter, *http.Request) {
 			return
 		}
 
-		videoPath := filepath.Join(storage.CONTENT_DIR, id, storage.VIDEO_FILE_NAME)
-		thumbPath := filepath.Join(storage.CONTENT_DIR, id, storage.THUMB_FILE_NAME)
-
-		out, err := exec.Command("D:\\projects\\go_dev\\dev\\src\\go_study\\bin\\VideoProcessor.exe", videoPath, thumbPath).Output()
-		if err != nil {
-			log.Error(err.Error())
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
-		duration, err := strconv.ParseFloat(string(out), 64)
-		if err != nil {
-			log.Error(err.Error())
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-
 		tx, err := db.Begin()
 		if err != nil {
 			log.Error(err.Error())
@@ -68,13 +49,10 @@ func uploadVideo(db *sql.DB) func(http.ResponseWriter, *http.Request) {
 		defer tx.Rollback()
 
 		rows, err := tx.Query(
-			"INSERT INTO video SET video_key = ?, title = ?, duration = ?, thumbnail_url = ?, url = ?, status = ?",
+			"INSERT INTO video SET video_key = ?, title = ?, url = ?",
 			id,
 			header.Filename,
-			duration,
-			thumbPath,
-			videoPath,
-			3,
+			filepath.Join(storage.CONTENT_DIR, id, storage.VIDEO_FILE_NAME),
 		)
 		if err != nil {
 			log.Error(err.Error())
