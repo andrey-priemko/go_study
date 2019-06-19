@@ -11,11 +11,10 @@ func ExecTransaction(db *sql.DB, query string, args ...interface{}) error {
 	}
 	defer tx.Rollback()
 
-	rows, err := tx.Query(query, args...)
+	_, err = tx.Exec(query, args...)
 	if err != nil {
 		return err
 	}
-	defer rows.Close()
 
 	err = tx.Commit()
 	if err != nil {

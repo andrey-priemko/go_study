@@ -1,7 +1,7 @@
 package storage
 
-const CONTENT_DIR = "content"
+const ContentDir = "content"
 
-const VIDEO_CONTENT_TYPE = "video/mp4"
-const VIDEO_FILE_NAME = "index.mp4"
-const THUMB_FILE_NAME = "screen.jpg"
+const VideoContentType = "video/mp4"
+const VideoFileName = "index.mp4"
+const ThumbFileName = "screen.jpg"

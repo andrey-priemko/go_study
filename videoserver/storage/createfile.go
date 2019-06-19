@@ -7,7 +7,7 @@ import (
 )
 
 func CreateFile(fileName string) (*os.File, string, error) {
-	if err := os.Mkdir(CONTENT_DIR, os.ModeDir); err != nil && !os.IsExist(err) {
+	if err := os.Mkdir(ContentDir, os.ModeDir); err != nil && !os.IsExist(err) {
 		return nil, "", err
 	}
 
@@ -17,7 +17,7 @@ func CreateFile(fileName string) (*os.File, string, error) {
 	}
 	idStr := id.String()
 
-	dirPath := filepath.Join(CONTENT_DIR, idStr)
+	dirPath := filepath.Join(ContentDir, idStr)
 	if err := os.Mkdir(dirPath, os.ModeDir); err != nil && !os.IsExist(err) {
 		return nil, "", err
 	}

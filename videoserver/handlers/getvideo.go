@@ -14,7 +14,7 @@ func getVideo(db *sql.DB) func(http.ResponseWriter, *http.Request) {
 		id := vars["ID"]
 
 		var video model.Video
-		err := db.QueryRow("SELECT video_key, title, duration, thumbnail_url, url FROM video WHERE video_key = ?", id).Scan(
+		err := db.QueryRow("SELECT video_key, title, duration, thumbnail_url, url FROM video WHERE video_key=?", id).Scan(
 			&video.Id,
 			&video.Name,
 			&video.Duration,

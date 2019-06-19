@@ -20,13 +20,13 @@ func uploadVideo(db *sql.DB) func(http.ResponseWriter, *http.Request) {
 		}
 
 		contentType := header.Header.Get("Content-Type")
-		if contentType != storage.VIDEO_CONTENT_TYPE {
+		if contentType != storage.VideoContentType {
 			log.Error("Unexpected content type", contentType)
 			http.Error(w, "Unexpected content type", http.StatusBadRequest)
 			return
 		}
 
-		file, id, err := storage.CreateFile(storage.VIDEO_FILE_NAME)
+		file, id, err := storage.CreateFile(storage.VideoFileName)
 		if err != nil {
 			log.Error(err.Error())
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -43,10 +43,10 @@ func uploadVideo(db *sql.DB) func(http.ResponseWriter, *http.Request) {
 
 		err = database.ExecTransaction(
 			db,
-			"INSERT INTO video SET video_key = ?, title = ?, url = ?",
+			"INSERT INTO video SET video_key=?, title=?, url=?",
 			id,
 			header.Filename,
-			filepath.Join(storage.CONTENT_DIR, id, storage.VIDEO_FILE_NAME),
+			filepath.Join(storage.ContentDir, id, storage.VideoFileName),
 		)
 		if err != nil {
 			log.Error(err.Error())
