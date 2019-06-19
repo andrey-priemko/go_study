@@ -22,7 +22,7 @@ func main() {
 
 	db, err := sql.Open("mysql", `root:1234@/go_dev`)
 	if err != nil {
-		log.Fatal(err)
+		log.Error(err)
 	}
 	defer db.Close()
 
@@ -40,7 +40,7 @@ func startServer(serverUrl string, db *sql.DB) *http.Server {
 	router := handlers.Router(db)
 	srv := &http.Server{Addr: serverUrl, Handler: router}
 	go func() {
-		log.Fatal(srv.ListenAndServe())
+		log.Error(srv.ListenAndServe())
 	}()
 
 	return srv

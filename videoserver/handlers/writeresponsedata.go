@@ -10,7 +10,7 @@ import (
 func writeResponseData(w http.ResponseWriter, data interface{})  {
 	b, err := json.Marshal(data)
 	if err != nil {
-		log.Fatal(err.Error())
+		log.Error(err.Error())
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}

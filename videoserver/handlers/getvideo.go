@@ -22,7 +22,7 @@ func getVideo(db *sql.DB) func(http.ResponseWriter, *http.Request) {
 			&video.Url,
 		)
 		if err != nil {
-			log.Fatal(err.Error())
+			log.Error(err.Error())
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
