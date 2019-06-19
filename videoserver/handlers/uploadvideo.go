@@ -45,7 +45,7 @@ func uploadVideo(db *sql.DB) func(http.ResponseWriter, *http.Request) {
 		videoPath := filepath.Join(storage.CONTENT_DIR, id, storage.VIDEO_FILE_NAME)
 		thumbPath := filepath.Join(storage.CONTENT_DIR, id, storage.THUMB_FILE_NAME)
 
-		out, err := exec.Command("D:\\projects\\go_dev\\dev\\src\\go_study\\bin\\videoprocessor.exe", videoPath, thumbPath).Output()
+		out, err := exec.Command("D:\\projects\\go_dev\\dev\\src\\go_study\\bin\\VideoProcessor.exe", videoPath, thumbPath).Output()
 		if err != nil {
 			log.Error(err.Error())
 			http.Error(w, err.Error(), http.StatusBadRequest)
