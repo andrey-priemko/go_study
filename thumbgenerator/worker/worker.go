@@ -16,7 +16,7 @@ func Worker(tasksChan <-chan *model.Task, db *sql.DB, name int) {
 	for task := range tasksChan {
 		log.Printf("start handle task %v on worker %v\n", task.VideoKey, name)
 
-		thumbUrl := filepath.Join("content", task.VideoKey, storage.ThumbFileName) //todo
+		thumbUrl := filepath.Join(filepath.Dir(task.Url), storage.ThumbFileName)
 		out, err := exec.Command("D:\\projects\\go_dev\\dev\\src\\go_study\\bin\\VideoProcessor.exe", task.Url, thumbUrl).Output()
 		if err != nil {
 			log.Error(err.Error())
@@ -28,8 +28,6 @@ func Worker(tasksChan <-chan *model.Task, db *sql.DB, name int) {
 			log.Error(err.Error())
 			continue
 		}
-
-		log.Printf("duration", duration)
 
 		err = database.ExecTransaction(
 			db,
