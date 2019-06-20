@@ -1,20 +1,19 @@
 package handlers
 
 import (
-	"database/sql"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
 	"go_study/videoserver/provider"
 	"net/http"
 )
 
-func Router(db *sql.DB, dp provider.DataProvider) http.Handler {
+func Router(dp provider.DataProvider) http.Handler {
 	r := mux.NewRouter()
 	s := r.PathPrefix("/api/v1").Subrouter()
 
 	s.HandleFunc("/list", getVideoList(dp)).Methods(http.MethodGet)
 	s.HandleFunc("/video/{ID}", getVideo(dp)).Methods(http.MethodGet)
-	s.HandleFunc("/video", uploadVideo(db)).Methods(http.MethodPost)
+	s.HandleFunc("/video", uploadVideo(dp)).Methods(http.MethodPost)
 
 	return logMiddleware(r)
 }

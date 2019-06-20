@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"database/sql"
 	_ "github.com/go-sql-driver/mysql"
 	log "github.com/sirupsen/logrus"
 	"go_study/videoserver/handlers"
@@ -33,14 +32,14 @@ func main() {
 
 	serverUrl := ":8000"
 	log.WithFields(log.Fields{"url": serverUrl}).Info("starting the server")
-	srv := startServer(serverUrl, connector.DB, &connector)
+	srv := startServer(serverUrl, &connector)
 
 	waitForKillSignal(killSignalChan)
 	srv.Shutdown(context.Background())
 }
 
-func startServer(serverUrl string, db *sql.DB, dp provider.DataProvider) *http.Server {
-	router := handlers.Router(db, dp)
+func startServer(serverUrl string, dp provider.DataProvider) *http.Server {
+	router := handlers.Router(dp)
 	srv := &http.Server{Addr: serverUrl, Handler: router}
 	go func() {
 		log.Error(srv.ListenAndServe())
