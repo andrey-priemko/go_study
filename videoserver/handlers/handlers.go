@@ -12,7 +12,7 @@ func Router(db *sql.DB, dp provider.DataProvider) http.Handler {
 	r := mux.NewRouter()
 	s := r.PathPrefix("/api/v1").Subrouter()
 
-	s.HandleFunc("/list", getVideoList(db)).Methods(http.MethodGet)
+	s.HandleFunc("/list", getVideoList(dp)).Methods(http.MethodGet)
 	s.HandleFunc("/video/{ID}", getVideo(dp)).Methods(http.MethodGet)
 	s.HandleFunc("/video", uploadVideo(db)).Methods(http.MethodPost)
 
