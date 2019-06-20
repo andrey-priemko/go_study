@@ -1,16 +1,15 @@
 package handlers
 
 import (
-	"database/sql"
 	log "github.com/sirupsen/logrus"
-	"go_study/videoserver/database"
+	"go_study/videoserver/provider"
 	"go_study/videoserver/storage"
 	"io"
 	"net/http"
 	"path/filepath"
 )
 
-func uploadVideo(db *sql.DB) func(http.ResponseWriter, *http.Request) {
+func uploadVideo(provider provider.DataProvider) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		fileReader, header, err := r.FormFile("file[]")
 		if err != nil {
@@ -41,9 +40,7 @@ func uploadVideo(db *sql.DB) func(http.ResponseWriter, *http.Request) {
 			return
 		}
 
-		err = database.ExecTransaction(
-			db,
-			"INSERT INTO video SET video_key=?, title=?, url=?",
+		err = provider.UploadVideo(
 			id,
 			header.Filename,
 			filepath.Join(storage.ContentDir, id, storage.VideoFileName),
