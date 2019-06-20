@@ -1,26 +1,18 @@
 package handlers
 
 import (
-	"database/sql"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
-	"go_study/videoserver/model"
+	"go_study/videoserver/provider"
 	"net/http"
 )
 
-func getVideo(db *sql.DB) func(http.ResponseWriter, *http.Request) {
+func getVideo(dp provider.DataProvider) func(http.ResponseWriter, *http.Request) {
 	return func(w http.ResponseWriter, r *http.Request) {
 		vars := mux.Vars(r)
 		id := vars["ID"]
 
-		var video model.Video
-		err := db.QueryRow("SELECT video_key, title, duration, thumbnail_url, url FROM video WHERE video_key=?", id).Scan(
-			&video.Id,
-			&video.Name,
-			&video.Duration,
-			&video.Thumbnail,
-			&video.Url,
-		)
+		video, err := dp.GetVideo(id)
 		if err != nil {
 			log.Error(err.Error())
 			http.Error(w, err.Error(), http.StatusInternalServerError)

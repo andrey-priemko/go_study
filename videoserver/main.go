@@ -6,6 +6,8 @@ import (
 	_ "github.com/go-sql-driver/mysql"
 	log "github.com/sirupsen/logrus"
 	"go_study/videoserver/handlers"
+	"go_study/videoserver/provider"
+	"go_study/videoserver/provider/mysql"
 	"net/http"
 	"os"
 	"os/signal"
@@ -20,24 +22,25 @@ func main() {
 		defer file.Close()
 	}
 
-	db, err := sql.Open("mysql", `root:1234@/go_dev`)
+	var connector mysql.Connector
+	err = connector.Connect()
 	if err != nil {
-		log.Error(err)
+		panic("unable to connect to database")
 	}
-	defer db.Close()
+	defer connector.Close()
 
 	killSignalChan := getKillSignalChan()
 
 	serverUrl := ":8000"
 	log.WithFields(log.Fields{"url": serverUrl}).Info("starting the server")
-	srv := startServer(serverUrl, db)
+	srv := startServer(serverUrl, connector.DB, &connector)
 
 	waitForKillSignal(killSignalChan)
 	srv.Shutdown(context.Background())
 }
 
-func startServer(serverUrl string, db *sql.DB) *http.Server {
-	router := handlers.Router(db)
+func startServer(serverUrl string, db *sql.DB, dp provider.DataProvider) *http.Server {
+	router := handlers.Router(db, dp)
 	srv := &http.Server{Addr: serverUrl, Handler: router}
 	go func() {
 		log.Error(srv.ListenAndServe())

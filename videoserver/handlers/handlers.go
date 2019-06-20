@@ -4,15 +4,16 @@ import (
 	"database/sql"
 	"github.com/gorilla/mux"
 	log "github.com/sirupsen/logrus"
+	"go_study/videoserver/provider"
 	"net/http"
 )
 
-func Router(db *sql.DB) http.Handler {
+func Router(db *sql.DB, dp provider.DataProvider) http.Handler {
 	r := mux.NewRouter()
 	s := r.PathPrefix("/api/v1").Subrouter()
 
 	s.HandleFunc("/list", getVideoList(db)).Methods(http.MethodGet)
-	s.HandleFunc("/video/{ID}", getVideo(db)).Methods(http.MethodGet)
+	s.HandleFunc("/video/{ID}", getVideo(dp)).Methods(http.MethodGet)
 	s.HandleFunc("/video", uploadVideo(db)).Methods(http.MethodPost)
 
 	return logMiddleware(r)
