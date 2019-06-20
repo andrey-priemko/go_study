@@ -27,11 +27,11 @@ func ProcessTask(task *model.Task, db *sql.DB) {
 
 	err = database.ExecTransaction(
 		db,
-		"UPDATE video SET status=?, duration=?, thumbnail_url=? WHERE video_key=?",
+		"UPDATE video SET status=?, duration=?, thumbnail_url=? WHERE id=?",
 		model.Processed,
 		duration,
 		thumbUrl,
-		task.VideoKey,
+		task.Id,
 	)
 	if err != nil {
 		log.Error(err.Error())

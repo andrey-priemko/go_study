@@ -1,6 +1,6 @@
 package model
 
 type Task struct {
-	VideoKey string
+	Id uint
 	Url string
 }

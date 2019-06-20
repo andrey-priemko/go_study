@@ -9,8 +9,8 @@ import (
 
 func GenerateTask(db *sql.DB) *model.Task {
 	var task model.Task
-	err := db.QueryRow("SELECT video_key, url FROM video WHERE status=?", model.NotProcessed).Scan(
-		&task.VideoKey,
+	err := db.QueryRow("SELECT id, url FROM video WHERE status=?", model.NotProcessed).Scan(
+		&task.Id,
 		&task.Url,
 	)
 	if err != nil {
@@ -20,8 +20,8 @@ func GenerateTask(db *sql.DB) *model.Task {
 
 	err = database.ExecTransaction(
 		db,
-		"UPDATE video SET status=? WHERE video_key=?", model.Processing,
-		task.VideoKey,
+		"UPDATE video SET status=? WHERE id=?", model.Processing,
+		task.Id,
 	)
 	if err != nil {
 		log.Error(err.Error())
