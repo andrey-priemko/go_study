@@ -1,10 +1,10 @@
 package handlers
 
 import (
+	"github.com/google/uuid"
 	log "github.com/sirupsen/logrus"
 	"go_study/videoserver/provider"
 	"go_study/videoserver/storage"
-	"io"
 	"net/http"
 	"path/filepath"
 )
@@ -25,15 +25,15 @@ func uploadVideo(provider provider.DataProvider) func(http.ResponseWriter, *http
 			return
 		}
 
-		file, id, err := storage.CreateFile(storage.VideoFileName)
+		id, err := uuid.NewUUID()
 		if err != nil {
 			log.Error(err.Error())
 			http.Error(w, err.Error(), http.StatusBadRequest)
 			return
 		}
-		defer file.Close()
+		videoId := id.String()
 
-		_, err = io.Copy(file, fileReader)
+		err = storage.CopyFile(fileReader, videoId)
 		if err != nil {
 			log.Error(err.Error())
 			http.Error(w, err.Error(), http.StatusBadRequest)
@@ -41,9 +41,9 @@ func uploadVideo(provider provider.DataProvider) func(http.ResponseWriter, *http
 		}
 
 		err = provider.UploadVideo(
-			id,
+			videoId,
 			header.Filename,
-			filepath.Join(storage.ContentDir, id, storage.VideoFileName),
+			filepath.Join(storage.ContentDir, videoId, storage.VideoFileName),
 		)
 		if err != nil {
 			log.Error(err.Error())
