@@ -2,55 +2,17 @@ package handlers
 
 import (
 	"encoding/json"
-	"errors"
 	"github.com/stretchr/testify/assert"
 	"go_study/videoserver/model"
+	"go_study/videoserver/provider"
 	"io/ioutil"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 )
 
-type MockProvider struct {
-	Videos []model.Video
-}
-
-func (p *MockProvider) GetVideo(id string) (*model.Video, error) {
-	for _, item := range p.Videos {
-		if item.Id == id {
-			return &item, nil
-		}
-	}
-	return nil, errors.New("not found")
-}
-
-func (p *MockProvider) GetVideoList() ([]model.VideoListItem, error) {
-	return nil, errors.New("not implemented")
-}
-
-func (p *MockProvider) UploadVideo(id string, fileName string, url string) error {
-	return errors.New("not implemented")
-}
-
-func (p *MockProvider) Init() {
-	p.Videos = append(p.Videos, model.Video{
-		"id1",
-		"name1",
-		1,
-		"thumb11",
-		"url1",
-	})
-	p.Videos = append(p.Videos, model.Video{
-		"id2",
-		"name2",
-		2,
-		"thumb2",
-		"url2",
-	})
-}
-
 func TestSuccessfulGetVideoRequest(t *testing.T) {
-	var mockProvider MockProvider
+	var mockProvider provider.MockProvider
 	mockProvider.Init()
 
 	router := Router(&mockProvider)
@@ -82,7 +44,7 @@ func TestSuccessfulGetVideoRequest(t *testing.T) {
 }
 
 func TestUnsuccessfulGetVideoRequest(t *testing.T) {
-	var mockProvider MockProvider
+	var mockProvider provider.MockProvider
 	mockProvider.Init()
 
 	router := Router(&mockProvider)
